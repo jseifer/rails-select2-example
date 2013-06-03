@@ -1,5 +1,9 @@
-<h1>Select2 Example</h1>
+<div class="page-header">
+  <h1>Select2 Example</h1>
+</div>
 
+<h2>Sample Data</h2>
+<p>This can be found in the create_people migration.</p>
 <table class="table table-bordered table-condensed">
   <tr>
     <th>Name</th>
@@ -12,3 +16,186 @@
   </tr>
   <% end %>
 </table>
+
+<hr />
+
+<section id="simple">
+  <h2>Simple Example</h2>
+  <div class="row">
+    <div class="span6">
+      <h3>Without Select2</h3>
+      <form>
+        <%= select_tag "people", options_from_collection_for_select(@people, "id", "name") %>
+      </form>
+     
+    </div>
+    <div class="span6">
+      <h3>With Select2</h3>
+      <form>
+        <%= select_tag "people", options_from_collection_for_select(@people, "id", "name"), id: "simple-example" %>
+      </form>
+    </div>
+  </div>
+
+  <p>This is a vanilla <code>select_tag</code> using a rails generator. The code to initialize this is:</p>
+<pre class="prettyprint linenums">
+$(document).ready(function() {
+  $('select#simple-example').select2();
+});
+</pre>
+</section>
+
+
+<section id="placeholder">
+  <h2>Placeholder Example</h2>
+  <form>
+    <%= select_tag "people-placeholder", options_from_collection_for_select(@people, "id", "name"), include_blank: true, id: "placeholder-example", data: { placeholder: "Choose a person" } %>
+  </form>
+  
+<pre class="prettyprint linenums">
+$(document).ready(function() {
+  $('select#placeholder-example').select2({
+    placeholder: "Choose a person",
+    allowClear: true
+  });
+});
+</pre>
+
+  <p>When using the <code>placeholder</code> option with Rails, it is necessary to use the <code>include_blank: true</code> option to your <code>select_tag</code> options. The <strong>allowClear</strong> option will place a small X to the right which allows the selection to be cleared.</p>
+</section>
+
+<section id="template">
+  <h2>Template Example</h2>
+  <form>
+    <select id="template-example">
+      <% @people.each do |person| %>
+      <option value="<%= person.id %>" data-favorite-color="<%= person.favorite_color %>"><%= person.name %></option>
+      <% end %>
+    </select>
+  </form>
+  
+  <h4>Ruby/HTML</h4>
+  <pre class="prettyprint linenums">
+&lt;select id="template-example"&gt;
+  &lt;% @people.each do |person| %&gt;
+    &lt;option value="&lt;%= person.id %&gt;" data-favorite-color="&lt;%= person.favorite_color %&gt;">&lt;%= person.name %&gt;&lt;/option&gt;
+  &lt;% end %&gt;
+&lt;/select&gt;
+</pre>
+
+  <h4>JavaScript</h4>
+  <pre class="prettyprint linenums">
+$(document).ready(function() {
+  function formatExample(person) {
+    var originalOption = $(person.element);
+    return "<span style='display: inline; background-color: " + originalOption.data("favoriteColor").toLowerCase() + "'>&nbsp;&nbsp;</span> " + person.text;
+  }
+  $('select#template-example').select2({
+    formatResult: formatExample,
+    formatSelection: formatExample,
+    escapeMarkup: function(m) { return m; }
+  });
+});
+</pre>
+
+  <p>
+    In this example, we're not using any Rails helpers to create a select tag. We
+    manually iterate through the <code>@people</code> collection and write out our
+    specific option tags. We do this so that we can pass the <code>data-favorite-color</code> attribute in to the markup.
+  </p>
+
+  <p>In our JavaScript for this example, we use <code>formatExample</code> function to add a small span to our list containing the person's favorite color. The span uses a background color and space characters to display. We use a cringe-worthy inline style to make it look good (hey, at least it works!). Finally, we call the <code>select2</code> function and pass it the <code>formatExample</code> function to format our data. Select2 takes care of the rest.</p>
+</section>
+
+
+
+<section id="ajax">
+  <h2>Ajax Example</h2>
+  <form>
+    <input type="hidden" id="ajax-example" />
+  </form>
+    
+  <h4>Rails</h4>
+<pre class="prettyprint linenums">
+class PeopleController < ApplicationController
+  respond_to :html, :json
+
+  def index
+    @people = Person.order('name asc').all
+    respond_with @people
+  end
+end
+</pre>
+
+  <h4>HTML</h4>
+<pre class="prettyprint linenums">
+&lt;input type="hidden" id="ajax-example" /&gt;
+</pre>
+
+  <h4>JavaScript</h4>
+<pre class="prettyprint linenums">
+$(document).ready(function() {
+  $('#ajax-example').select2({
+    ajax: {
+      url: "<%= people_path(format: 'json') %>",
+      dataType: "json",
+      results: function(data, page) {
+        return { 
+          results: $.map( data, function(person, i) { 
+            return { id: person.id, text: person.name } 
+          } )
+        }
+      }
+    }
+  });
+});
+</pre>
+
+<p>In this example, we are using Rails as the backend to return json to the select2 call. In our HTML, we are creating a hidden input with the id of <code>ajax-example</code>. We then call the select2 function on that element.</p>
+
+<p>The biggest difference between this example and the others is that we are passing in the <code>ajax</code> option to select2 this time. We tell select2 the url we want to fetch with the <code>url</code> key. We just use a Rails helper to call the people path and pass in the json format. We then use this in the dataType key.</p>
+
+<p>The next part, on line 8, is the results key. This is where we perform a little bit of manipulation on the data. Select2 expects that the results object will have an <code>id</code> and <code>text</code> key for each result. We go through our data response, which we get from our Rails controller, and create this object for select2 using the jQuery <code>map</code> function.</p>
+
+<p>Our Rails controller responds with json of the people collection. We could use any Rails controller here as long as it returns json.</p>
+</section>
+
+
+
+
+<% content_for :js do %>
+<script type="text/javascript">
+$(document).ready(function() {
+  prettyPrint();
+
+  $('select#simple-example').select2();
+
+  $('select#placeholder-example').select2({
+      placeholder: "Choose a person",
+      allowClear: true
+  });
+
+  function formatExample(person) {
+    var originalOption = $(person.element);
+    return "<span style='display: inline; background-color: " + originalOption.data("favoriteColor").toLowerCase() + "'>&nbsp;&nbsp;</span> " + person.text;
+  }
+  $('select#template-example').select2({
+    formatResult: formatExample,
+    formatSelection: formatExample,
+    escapeMarkup: function(m) { return m; }
+  });
+
+  $('#ajax-example').select2({
+    ajax: {
+      url: "<%= people_path(format: 'json') %>",
+      dataType: "json",
+      results: function(data, page) {
+        return { results: $.map( data, function(person, i) { 
+          return { id: person.id, text: person.name } 
+        } ) }
+      }
+    }
+  });
+});
+</script>
+<% end %>
