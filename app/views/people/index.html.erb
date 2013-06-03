@@ -1,0 +1,14 @@
+<h1>Select2 Example</h1>
+
+<table class="table table-bordered table-condensed">
+  <tr>
+    <th>Name</th>
+    <th>Favorite Color</th>
+  </tr>
+  <% @people.each do |person| %>
+  <tr>
+    <td><%= person.name %></td>
+    <td><%= person.favorite_color %></td>
+  </tr>
+  <% end %>
+</table>
